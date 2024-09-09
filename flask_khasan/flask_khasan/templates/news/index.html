@@ -5,18 +5,11 @@
 {% endblock title %}
 
 {% block body %}
-<ul class="nav nav-tabs">
-  <li class="nav-item">
-    <a class="nav-link active" aria-current="page" href="#">Активная</a>
-  </li>
-  <li class="nav-item">
-    <a class="nav-link" href="#">Ссылка</a>
-  </li>
-  <li class="nav-item">
-    <a class="nav-link" href="#">Ссылка</a>
-  </li>
-  <li class="nav-item">
-    <a class="nav-link disabled">Отключенная</a>
-  </li>
-</ul>
+{% include 'news/components/_category_button.html' %}
+
+<div class="row">
+    {% include 'news/components/_post_card.html' %}
+
+</div>
+
 {% endblock body %}
