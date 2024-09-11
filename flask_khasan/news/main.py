@@ -1,6 +1,10 @@
-import sqlalchemy
+from werkzeug.utils import secure_filename
+import os
+import uuid as uuid
+
 from flask import Flask, render_template, request, abort, redirect, url_for
 from flask_sqlalchemy import SQLAlchemy
+from flask_migrate import Migrate
 
 # create the extension
 db = SQLAlchemy()
@@ -10,10 +14,13 @@ app = Flask(__name__)
 
 # Configure the postgresql database
 app.config['SQLALCHEMY_DATABASE_URI'] = f'postgresql://postgres:qwerty@127.0.0.1/news'
-app.config['SQLALCHEMY_ECHO'] = True # logs db
+UPLOAD_FOLDER = 'static/images'
+app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
+#app.config['SQLALCHEMY_ECHO'] = True # logs db
 
 # initialize the app with the extension
 db.init_app(app)
+migrate = Migrate(app, db)
 
 # Create Model
 from datetime import datetime
@@ -39,17 +46,19 @@ class Post(db.Model):
     created = db.Column(db.DateTime, default=datetime.now())
     category_id = mapped_column(ForeignKey('category.id'))
     category = db.relationship('Category', back_populates='posts')
+    picture = db.Column(db.String(), nullable=True)
 
     def __repr__(self):
         return self.title
 
 # Forms
-from wtforms import Form, StringField, TextAreaField, SelectField
+from wtforms import Form, StringField, TextAreaField, SelectField, FileField
 
 class PostForm(Form):
     title = StringField('Заголовок статьи')
     content = TextAreaField('Текст статьи', render_kw={'rows': 15})
     category = SelectField('Категория:', choices=[])
+    picture = FileField('Картинка для статьи')
 
 
 @app.route('/')
@@ -110,7 +119,12 @@ def create_post():
         category = request.form['category']
         category_id = Category.query.filter(Category.title == category).first().id
 
-        post = Post(title=title, content=content, category_id=category_id)
+        picture_file = request.files['picture']
+        picture_name = secure_filename(picture_file.filename)
+        picture_name = str(uuid.uuid1()) + '_' + picture_name
+        picture_file.save(os.path.join(app.config['UPLOAD_FOLDER'], picture_name))
+
+        post = Post(title=title, content=content, category_id=category_id, picture=picture_name)
         db.session.add(post)
         db.session.commit()
 
