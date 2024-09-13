@@ -10,6 +10,7 @@ app = Flask(__name__)
 app.config['SQLALCHEMY_DATABASE_URI'] = f'postgresql://postgres:qwerty@127.0.0.1/news'
 UPLOAD_FOLDER = 'news_khasan/static/images'
 app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
+app.config['SECRET_KEY'] = ['Very Secret Key']
 # app.config['SQLALCHEMY_ECHO'] = True # logs db
 
 # create the extension

@@ -1,12 +1,71 @@
-from werkzeug.utils import secure_filename
 import os
 import uuid as uuid
+from werkzeug.utils import secure_filename
+from werkzeug.security import generate_password_hash
+from werkzeug.security import check_password_hash
 
 from flask import render_template, request, abort, redirect, url_for
+from sqlalchemy.exc import IntegrityError
+from flask_login import LoginManager, login_user, logout_user
 
 from news_khasan import db, app
 from news_khasan.forms import PostForm
 from news_khasan.models import Post, Category
+from news_khasan.forms import Registration
+from news_khasan.models import Users
+from news_khasan.forms import UserLogin
+
+
+# Flask login
+login_manager = LoginManager()
+login_manager.init_app(app)
+login_manager.login_view = 'user_login'
+
+
+@login_manager.user_loader
+def load_user(user_id):
+    """Чеккер пользователя"""
+    return Users.query.get(int(user_id))
+
+@app.route('/login', methods=['POST', 'GET'])
+def user_login():
+    """Аутентификация пользователя"""
+    form = UserLogin(request.form)
+    if request.method == 'POST':
+        user = Users.query.filter_by(username=form.username.data).first()
+        if user and check_password_hash(user.password, form.password.data):
+            login_user(user)
+            return redirect(url_for('index'))
+
+    return render_template('news/user_login.html', form=form)
+
+
+@app.route('/logout', methods=['POST', 'GET'])
+def logout():
+    logout_user()
+    return redirect(url_for('index'))
+
+
+@app.route('/registration', methods=['POST', 'GET'])
+def user_registration():
+    """Logic for registration"""
+    form = Registration(request.form)
+    if request.method == 'POST' and form.validate():
+        password_hash = generate_password_hash(form.password.data, method='scrypt', salt_length=1)
+        user = Users(first_name=form.first_name.data,
+                     last_name=form.last_name.data,
+                     username=form.username.data,
+                     phone=form.phone.data,
+                     email=form.email.data,
+                     password=password_hash)
+
+        try:
+            db.session.add(user)
+            db.session.commit()
+        except IntegrityError:
+            db.session.rollback()
+
+    return render_template('news/user_registration.html', form=form)
 
 
 @app.route('/')
@@ -124,6 +183,9 @@ def update_post(id: int):
     form = PostForm(obj=post)
     form.category.choices = [cat.title for cat in categories]
     return render_template('news/create_post.html', form=form, id=id)
+
+
+
 
 # Utils
 
