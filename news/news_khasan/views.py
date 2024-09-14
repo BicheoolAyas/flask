@@ -4,9 +4,9 @@ from werkzeug.utils import secure_filename
 from werkzeug.security import generate_password_hash
 from werkzeug.security import check_password_hash
 
-from flask import render_template, request, abort, redirect, url_for
+from flask import render_template, request, abort, redirect, url_for, flash
 from sqlalchemy.exc import IntegrityError
-from flask_login import LoginManager, login_user, logout_user
+from flask_login import LoginManager, login_user, logout_user, login_required
 
 from news_khasan import db, app
 from news_khasan.forms import PostForm
@@ -35,7 +35,10 @@ def user_login():
         user = Users.query.filter_by(username=form.username.data).first()
         if user and check_password_hash(user.password, form.password.data):
             login_user(user)
+            flash('Вы успешно вошли в систему')
             return redirect(url_for('index'))
+        else:
+            flash('Неверный логин или пароль', 'error')
 
     return render_template('news/user_login.html', form=form)
 
@@ -62,8 +65,11 @@ def user_registration():
         try:
             db.session.add(user)
             db.session.commit()
+            flash('Аккаунт создан успешно, пожалуйста войдите.')
+            return redirect(url_for('user_login'))
         except IntegrityError:
             db.session.rollback()
+            flash('Пользователь с такими данными уже существует', 'error')
 
     return render_template('news/user_registration.html', form=form)
 
@@ -124,6 +130,7 @@ def page404(e):
 
 
 @app.route('/post/create', methods=['POST', 'GET'])
+@login_required
 def create_post():
     if request.method == 'POST':
         title = request.form['title']
@@ -155,6 +162,7 @@ def delete_post(id: int):
     category = post.category_id
     db.session.delete(post)
     db.session.commit()
+    flash(f'Пост {post.title} успешно удален')
 
     return redirect(url_for('category_list', id=category))
 
@@ -185,6 +193,11 @@ def update_post(id: int):
     return render_template('news/create_post.html', form=form, id=id)
 
 
+@app.route('/prifile/<int:id>')
+def user_profile(id: int):
+    """user profile"""
+    user = Users.query.get(id)
+    return render_template('news/user_profile.html', user=user)
 
 
 # Utils

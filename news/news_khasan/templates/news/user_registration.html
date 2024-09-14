@@ -8,6 +8,7 @@
  <form action="{{ url_for('user_registration') }}" method="POST">
     <div class="d-flex justify-content-center">
         <div class="col-md-8">
+            {% include 'news/components/_form_errors.html' %}
             <h2 class="text-center">
                 Регистрация пользователя
             </h2>
