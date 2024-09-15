@@ -25,3 +25,14 @@ class UserLogin(Form):
     """Форма для авторизации пользоваеля"""
     username = StringField('Login')
     password = PasswordField('Password')
+
+
+class UpdateUserProfile(Form):
+    """Форма для редактирования поользовательского профайла"""
+    username = StringField('Логин',[validators.DataRequired()])
+    first_name = StringField('Имя', [validators.DataRequired()])
+    last_name = StringField('Фамилия', [validators.DataRequired()])
+    phone = StringField('Контактный номер')
+    email = StringField('Почта', [validators.DataRequired()])
+    bio = TextAreaField('БИО', render_kw={'rows': 5})
+    photo = FileField('Аватарка')

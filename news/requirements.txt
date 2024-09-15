@@ -31,6 +31,7 @@ fastapi==0.112.2
 fastapi-cli==0.0.5
 fasteners==0.14.1
 Flask==3.0.3
+Flask-Admin==1.6.1
 Flask-Login==0.6.3
 Flask-Migrate==4.0.7
 Flask-SQLAlchemy==3.1.1

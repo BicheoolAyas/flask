@@ -6,12 +6,12 @@ from werkzeug.security import check_password_hash
 
 from flask import render_template, request, abort, redirect, url_for, flash
 from sqlalchemy.exc import IntegrityError
-from flask_login import LoginManager, login_user, logout_user, login_required
+from flask_login import LoginManager, login_user, logout_user, login_required, current_user
 
 from news_khasan import db, app
 from news_khasan.forms import PostForm
 from news_khasan.models import Post, Category
-from news_khasan.forms import Registration
+from news_khasan.forms import Registration, UpdateUserProfile
 from news_khasan.models import Users
 from news_khasan.forms import UserLogin
 
@@ -193,11 +193,55 @@ def update_post(id: int):
     return render_template('news/create_post.html', form=form, id=id)
 
 
-@app.route('/prifile/<int:id>')
+@app.route('/profile/<int:id>')
 def user_profile(id: int):
     """user profile"""
     user = Users.query.get(id)
     return render_template('news/user_profile.html', user=user)
+
+
+@app.route('/profile/<int:id>/update/', methods=['POST', 'GET'])
+@login_required
+def update_user(id: int):
+    """Логика для редактирования пользователя"""
+    user = Users.query.get(id)
+    if request.method == 'POST':
+        user.username = request.form['username']
+        user.first_name = request.form['first_name']
+        user.last_name = request.form['last_name']
+        user.phone = request.form['phone']
+        user.email = request.form['email']
+        user.bio = request.form['bio']
+        if picture_file := request.files['photo']:
+            picture_name = secure_filename(picture_file.filename)
+            picture_name = str(uuid.uuid1()) + '_' + picture_name
+            picture_file.save(os.path.join(app.config['UPLOAD_FOLDER'], picture_name))
+            user.photo = picture_name
+        try:
+            db.session.add(user)
+            db.session.commit()
+            flash('Отредактировано успешно')
+        except IntegrityError:
+            db.session.rollback()
+            flash('Пользователь с такми данными уже существует', 'error')
+    elif str(current_user) != user.username:
+        abort(404)
+
+    form = UpdateUserProfile(obj=user)
+    return  render_template('news/edit_user_profile.html', form=form)
+
+
+@app.route('/profile/<int:id>/delete/')
+@login_required
+def delete_user(id: int):
+    """delete user"""
+    user = Users.query.get(id)
+    if str(current_user) != user.username:
+        abort(404)
+    db.session.delete(user)
+    db.session.commit()
+    flash('Пользоваель удален')
+    return redirect(url_for('index'))
 
 
 # Utils
