@@ -45,7 +45,9 @@
                     Здравствуйте, {{ current_user }}.
                   </a>
                   <ul class="dropdown-menu">
-                    <li><a class="dropdown-item" href="#">Админка</a></li>
+                    {% if current_user.is_staff %}
+                    <li><a class="dropdown-item" href="/admin">Админка</a></li>
+                    {% endif %}
                     <li><a class="dropdown-item" href="{{ url_for('user_profile', id=current_user.id) }}">Моя страничка</a></li>
                     <li><a class="dropdown-item" href="{{  url_for('create_post')  }}">Добавить статью</a></li>
                     <li><hr class="dropdown-divider"></li>

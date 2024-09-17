@@ -27,6 +27,8 @@ class Post(db.Model):
     category_id = mapped_column(ForeignKey('category.id'))
     category = db.relationship('Category', back_populates='posts')
     picture = db.Column(db.String(), nullable=True)
+    author_id = db.Column(ForeignKey('users.id'), nullable=True)
+    author = db.relationship('Users', back_populates='posts')
 
     def __repr__(self):
         return self.title
@@ -43,6 +45,7 @@ class Users(db.Model, UserMixin):
     photo = db.Column(db.String(), nullable=True)
     password = db.Column(db.String(150))
     is_staff = db.Column(db.Boolean, default=False)
+    posts = db.relationship('Post', back_populates='author')
 
     def __repr__(self):
         return self.username

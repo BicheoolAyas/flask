@@ -143,7 +143,7 @@ def create_post():
         picture_name = str(uuid.uuid1()) + '_' + picture_name
         picture_file.save(os.path.join(app.config['UPLOAD_FOLDER'], picture_name))
 
-        post = Post(title=title, content=content, category_id=category_id, picture=picture_name)
+        post = Post(title=title, content=content, category_id=category_id, picture=picture_name, author=current_user)
         db.session.add(post)
         db.session.commit()
 
